@@ -4,8 +4,6 @@ output: html_document
 ---
 
 
-<h4>Candidate No.: 399411</h4>
-<h4>Module: Software Analytics</h4>
 
 
 
