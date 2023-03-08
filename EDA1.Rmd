@@ -1,0 +1,470 @@
+---
+title: "Exploratory Data Analysis on Wages Dataset Using R"
+output: html_document
+---
+
+
+<h4>Candidate No.: 399411</h4>
+<h4>Module: Software Analytics</h4>
+
+
+
+#### 1. Display descriptive statistics on the dataset.
+
+```{r}
+#Loading necessary packages
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(moments)
+#Reading the file, wage.csv, into the wage dataframe
+wage = read.csv('~/Downloads/wage.csv')
+
+#displaying the first five rows of the wage dataframe
+head(wage, 5)
+
+#Displaying the structure of the dataframe
+str(wage)
+```
+
+The structure of the wage dataframe shows that the dataframe has 7 variables of which ***married***, ***hourly_wage***, ***years_in_education***, ***years_in_employment*** and ***num_dependents*** are numeric variables, while ***gender*** and ***race*** are character variables.
+
+```{r}
+#Displaying the descriptive Statistics of the Wage data frame
+summary(wage)
+```
+
+The summary table displays the **minimum**, **1**<sup>st</sup> quartile, **median**, **mean**, **3**<sup>rd</sup> quartile and the **maximum** for all numeric variables of the dataframe.
+
+```{r}
+#creating a function that takes a vector and returns the value with the highest frequency
+mode_value = function(x) {
+  #Checks for the unique values in the vector
+   uniq_val = unique(x)
+  #the which.max function returns the index of the unique value 
+  #the value with the highest frequency is returned
+  return( uniq_val[ which.max( tabulate( match(x, uniq_val)))])
+}
+
+#Displaying the counts of the categories for the married variable
+table(wage$married)
+#Assigning the category of the married variable with the highest frequency to mode_m using the mode_value function
+mode_m = mode_value(wage$married)
+#Displaying the mode of the married variable
+if (mode_m == 1){
+  cat('The mode of the married variable is', mode_m,'which represents married. \n')
+}else{
+cat('The mode of the married variable is', mode_m,'which represents not married. \n')
+}
+
+#Displaying the counts of the categories for the gender variable
+table(wage$gender)
+#Assigning the category of the gender variable with the highest frequency to mode_g using the mode_value function
+mode_g = mode_value(wage$gender)
+#Displaying the mode of the gender variable
+cat('The mode of the gender variable is', mode_g, '\n')
+
+#Displaying the counts of the categories for the race variable
+table(wage$race)
+#Assigning the category of the race variable with the highest frequency to mode_r using the mode_value function
+mode_r = mode_value(wage$race)
+#Displaying the mode of the race variable
+cat('The mode of the race variable is', mode_r)
+```
+
+I used the table function to create a contingency table that dispalys the counts for each category of the variables. I also created a function that returns the mode. I used the function to get the mode for each variable.
+
+For the first table, ***1*** represents ***married*** and ***0*** represents ***not married***.
+
+
+
+#### 2. Check if any records in the data have any missing values; handle the missing data as appropriate.
+
+```{r}
+ #Re-coding Empty spaces to missing values for the entire dataframe
+#select observations with empty spaces and recode to missing values
+wage[wage == ''] = NA
+
+#Using the sapply, sum and is.na function to iterate over the wage dataframe and get the total number of missing values for each variable
+sapply(wage, function(x) sum(is.na(x)))
+```
+
+The table shows the number of missing values for each variable in the wage dataframe.
+
+```{r}
+#Replacing the missing values for the categorical variables gender and race using the mode
+
+#Replace NA values in the married column with the category with the highest frequency
+wage$married = replace_na(wage$married, mode_m)
+
+#Replace NA values in the gender column with the category with the highest frequency
+wage$gender = replace_na(wage$gender, mode_g)
+
+#Replace NA values in the race column with the category with the highest frequency
+wage$race = replace_na(wage$race, mode_r)
+```
+
+I replaced the missing values of categorical variables with their mode.
+
+```{r}
+#Replacing the missing values for the Continuous variables using the mean and for the num_dependents I used the median
+
+#Replace NA values in the hourly_wage column with the mean
+wage$hourly_wage = replace_na(wage$hourly_wage, mean(wage$hourly_wage, na.rm = TRUE))
+
+#Replace NA values in the years_in_education column with the mean
+wage$years_in_education = replace_na(wage$years_in_education, mean(wage$years_in_education, na.rm = TRUE))
+
+#Replace NA values in the years_in_employment column with the mean
+wage$years_in_employment = replace_na(wage$years_in_employment, mean(wage$years_in_employment, na.rm = TRUE))
+
+#Replace NA values in the num_dependents column with the median
+wage$num_dependents = replace_na(wage$num_dependents, median(wage$num_dependents, na.rm = TRUE))
+
+#Using the sapply, sum and is.na function to iterate over the wage dataframe to check the missing values for each variable
+sapply(wage, function(x) sum(is.na(x)))
+```
+
+I replaced the missing values of continuous variables with their mean.
+
+The table shows that there are no more missing values in the wage dataframe.
+
+
+
+#### 3. Build a graph visualizing the distribution of one or more individual continuous variables of the dataset
+
+```{r}
+#Using ggplot to plot a histogram that shows the distribution of hourly wages
+ggplot(wage, aes(x = hourly_wage)) +
+  geom_histogram(binwidth = 1, color = "black", fill = 'white') +
+  scale_x_continuous(name="Hourly Wage")
+```
+
+This **histogram** shows the **Hourly wage** of the population.
+
+The histogram is **right-skewed**. Majority of the population's hourly wage is between 2.5 - 8.
+
+```{r}
+#Using ggplot to plot a frequency polygon that shows the distribution of years in employment
+ggplot(wage, aes(x = years_in_employment)) +
+  geom_freqpoly(binwidth = 1, color = "black") +
+  scale_x_continuous(name="Years In Employment(Yrs)")
+```
+
+The **frequency polygon** shows the **Years in employment** of the population.
+
+The frequency polygon is **right-skewed**. Majority of the population have only been in employment for less than 5 years.
+
+
+
+#### 4. Build a graph visualizing the relationship in a pair of continuous variables. Determine the correlation between them.
+
+```{r}
+#using ggplot to plot a scatter plot that shows the relationship between the hourly_wage and the Years_in_employment
+ggplot(wage, aes(years_in_employment, hourly_wage)) + 
+  geom_point(size = 0.25) +
+  scale_x_continuous(name="Years In Employment(Yrs)") +
+  scale_y_continuous(name="Hourly Wage")
+```
+
+```{r}
+#The scatter plot of Hourly wage and Years in employment shows that there is a weak positive linear relationship between the two variables.
+#Calculating the pearson correlation coefficient
+cor_1 = cor(wage$hourly_wage, wage$years_in_education, method = 'pearson')
+cat('The pearsons coefficient of correlation between hourly wage and years in employment is', cor_1)
+```
+
+The Pearsons coefficient of correlation of ***Hourly wage*** and ***Years in employment*** shows that there is a weak positive linear relationship between the two variables.
+
+```{r}
+#using ggplot to plot a scatter plot that shows the relationship between the Years_in_education and the Years_in_employment
+ggplot(wage, aes(num_dependents, hourly_wage)) + 
+  geom_point(size = 0.25) +
+  scale_x_continuous(name="Number Of Dependents") +
+  scale_y_continuous(name="Hourly Wage")
+```
+
+```{r}
+#The scatter plot of Number of Dependents and Hourly Wage shows that there is no linear relationship between the two variables.
+#Calculating the pearson correlation coefficient
+cor_2 = cor(wage$num_dependents, wage$hourly_wage, method = 'pearson')
+cat('The pearsons coefficient of correlation between number of dependents and hourly wage is', cor_2)
+```
+
+The Pearsons coefficient of correlation of ***Number of Dependents*** and ***Hourly Wage*** shows that there is no linear relationship between the two variables.
+
+
+
+#### 5. Display unique values of a categorical variable.
+
+```{r}
+#Using the unique function to get the unique values of the married variable
+uniq_mar = unique(wage$married)
+#Printing the unique values of the married variable
+cat('The married variable has two unique values,', uniq_mar[1], 'which represents married and', uniq_mar[2], 'which represents not married.\n')
+
+#Using the unique function to get the unique values of the race variable
+uniq_race = unique(wage$race)
+#Printing the unique values of the race variable
+cat('The race variable has two unique values,', uniq_race[1], 'and', uniq_race[2], '\n')
+
+#Using the unique function to get the unique values of the gender variable
+uniq_gen = unique(wage$gen)
+#Printing the unique values of the gendr variable
+cat('The gender variable has two unique values,', uniq_gen[1], 'and', uniq_gen[2])
+```
+
+
+```{r}
+#Using a bar plot to visualize the number of each categories in the Race variable
+#using ggplot to plot the barchart
+ggplot(wage, aes(race)) + 
+  geom_bar(fill = '#51ADFC')
+```
+
+The barplot shows that majority of the population is white.
+
+```{r}
+#Using a pie chart to visualize the proportion of each categories in the gender variable
+
+#creating a dataframe that has the gender categories and its respective proportions
+gender_prop = data.frame(prop.table(table(wage$gender)))
+
+#creating a dataframe that has the gender categories and percentages
+gender_per = data.frame(prop = scales::percent(gender_prop[,2]), Gender = gender_prop[,1])
+
+#Using ggplot to plot a pie chart showing the percentage of the population that is male or female
+ggplot(gender_per, aes(x = "", y = prop, fill = Gender)) +
+  geom_col(color = "white") +
+  geom_text(aes(label = prop),
+            position = position_stack(vjust = 0.5), color = 'white') +
+  coord_polar(theta = "y") +
+  scale_fill_discrete(labels = c("Female", "Male")) + 
+  theme_void()
+
+
+```
+
+The pie chart shows that 52.6% of the population is male and 47.4% is female.
+
+
+
+#### 6. Build a contingency table of two potentially related categorical variables. Conduct a statistical test of the independence between them.
+
+```{r}
+#building a contingency table of the race and married variables
+cont_table1 = table(wage$race, wage$married)
+cont_table1
+#Using the chi square test to test for independence of variables
+#the null hypothesis of the test is that there is no relationship between the race and married variables
+#the alternative hypothesis is that there is a relationship between the race and married variables
+chi1 = chisq.test(cont_table1)
+if(chi1$p.value < 0.05){
+  cat('The p_value of the test,', chi1$p.value, 'is less than the significance level of 5%')
+}else{
+cat('The p_value of the test,', chi1$p.value, 'is greater than the significance level of 5%')}
+```
+
+The chi square test shows us that the p_value is greater than the 5% significance level, Therefore we accept the null hypothesis that there is no relationship between the race and married variables.
+
+```{r}
+#building a contingency table of the gender and married variables
+cont_table2 = table(wage$gender, wage$married)
+cont_table2
+#Using the chi square test to test for independence of variables
+#the null hypothesis of the test is that there is no relationship between the gender and married variables
+#the alternative hypothesis is that there is a relationship between the gender and married variables
+chi2 = chisq.test(cont_table2)
+if(chi2$p.value < 0.05){
+  cat('The p_value of the test,', chi2$p.value, 'is less than the significance level of 5%')
+}else{
+cat('The p_value of the test,', chi2$p.value, 'is greater than the significance level of 5%')}
+```
+
+The chi square test shows us that the p_value is less than the 5% significance level, Therefore we reject the null hypothesis. This means there is a relationship between the gender and married variables.
+
+
+
+#### 7. Retrieve one or more subset of rows based on two or more criteria and present descriptive statistics on the subset(s).
+
+```{r}
+#Sub-setting the wage dataframe by the married females
+mar_fem = subset(wage, married == 1 & gender == 'female')
+
+#displaying the descriptive statistics of the numerical variables
+summary(mar_fem)
+#for the categorical variables,I used the mode_value function to get the mode.
+#mode of gender variable in the mar_fem dataframe
+mode_g1 = mode_value(mar_fem$gender)
+cat('The mode of the gender variable is', mode_g1, '\n')
+
+#mode of race variable in the mar_fem dataframe
+mode_r1 = mode_value(mar_fem$race)
+cat('The mode of the race variable is', mode_r1, '\n')
+
+#mode of married variable in the mar_fem dataframe
+mode_m1 = mode_value(mar_fem$married)
+if (mode_m1 == 1){
+  cat('The mode of the married variable is', mode_m1,'which represents married')
+}else{
+cat('The mode of the married variable is', mode_m1,'which represents not married')
+}
+```
+```{r}
+#Subsetting the wage dataframe by the nonwhite single males with no dependents
+nonw_male = subset(wage, gender == 'male' & race == 'nonwhite' & married == 0 & num_dependents == 0)
+
+#displaying the descriptive statistics of the numerical variables
+summary(nonw_male)
+#for the categorical variables,I used the mode_value function to get the mode.
+#mode of gender variable in the nonw_male dataframe
+mode_g2 = mode_value(nonw_male$gender)
+cat('The mode of the gender variable is', mode_g2, '\n')
+
+#mode of race variable in the nonw_male dataframe
+mode_r2 = mode_value(nonw_male$race)
+cat('The mode of the race variable is', mode_r2, '\n')
+
+#mode of married variable in the nonw_male dataframe
+mode_m2 = mode_value(nonw_male$married)
+if (mode_m2 == 1){
+  cat('The mode of the married variable is', mode_m2,'which represents married')
+}else{
+cat('The mode of the married variable is', mode_m2,'which represents not married')
+}
+```
+
+The summary table shows the **minimum**, **1**<sup>st</sup> quartile, **median**, **mean**, **3**<sup>rd</sup> quartile and the **maximum** for all numeric variables in the dataframe. I used the mode_value function to get the mode of the continuous variables.
+
+
+
+#### 8. Conduct a statistical test of the significance of the difference between the means of two subsets of the data.
+
+```{r}
+#conducting a statistical test for the hourly wage of the married male and married female subset
+#Creating the subset for married male
+subset_m = subset(wage, married == 1 & gender == 'male')
+#Creating the subset for married female
+subset_f = subset(wage, married == 1 & gender == 'female')
+
+#using the two sample t-test to test if the means of the hourly wage of the two subsets are different
+#the null hypothesis is that the means are equal, i.e., the difference in the means is equal to zero.
+ttest = t.test(subset_m$hourly_wage, subset_f$hourly_wage)
+ttest
+if(ttest$p.value < 0.05){
+  cat('The p_value of the test,', ttest$p.value, 'is less than the significance level of 5%')
+}else{
+cat('The p_value of the test,', ttest$p.value, 'is greater than the significance level of 5%')}
+```
+
+Since, the p_value of the test is less than the significance level of 5%, we reject the null hypothesis that the means are equal, i.e., the difference in the means is equal to zero. Hence, there is a significant difference between the means of the married male and married female population.
+
+From the output of the hypothesis test, it can be seen that the mean of hourly wage for the married male (7.97) is significantly higher than that of the married female (4.6) .
+
+```{r}
+#conducting a statistical test for the hourly wage of new workers ( year of employment = 0 ) and existing workers ( year of employment not = 0 )
+
+#Creating the subset for new workers
+subset_n = subset(wage, years_in_employment == 0)
+#Creating the subset for existing workers
+subset_e = subset(wage, years_in_employment != 0)
+
+#using the two sample t-test to test if the means of the hourly wage of the two subsets are different
+#the null hypothesis is that the means are equal, i.e., the difference in the means is equal to zero.
+ttest2 = t.test(subset_n$hourly_wage, subset_e$hourly_wage)
+ttest2
+if(ttest2$p.value < 0.05){
+  cat('The p_value of the test,', ttest2$p.value, 'is less than the significance level of 5%')
+}else{
+cat('The p_value of the test,', ttest2$p.value, 'is greater than the significance level of 5%')}
+```
+
+Since, the p_value of the test is less than the significance level of 5%, we reject the null hypothesis that the means are equal. Hence, there is a significant difference between the means of hourly wage of new workers and existing workers in the population.
+
+From the output of the hypothesis test, it can be seen that the mean of the hourly wage for new workers (4.58) is significantly lower than that of the existing workers (6.49).
+
+
+
+#### 9. Create one or more tables that group the data by a certain categorical variable and displays summarized information for each group (e.g. the mean or sum within the group).
+
+```{r}
+#creating a table that shows the mean of hourly_wage, mean of years_in_employment and mean of years_in_education for each gender and race category
+wage_gen_mean = summarise(group_by(wage, gender, race),  Mean_hw = mean(hourly_wage), Mean_Yem = mean(years_in_employment), Mean_Yed = mean(years_in_education))
+wage_gen_mean
+```
+
+This table shows the means of the hourly_wage, years_in_employment and years_in_education for each gender category.
+
+```{r}
+#creating a table that shows the mean of hourly_wage, mean of years_in_employment and mean of years_in_education for each race category
+wage_race_mean = summarise(group_by(wage, race),  Mean_hw = mean(hourly_wage), Mean_Yem = mean(years_in_employment), Mean_Yed = mean(years_in_education))
+wage_race_mean
+```
+
+This table shows the means of the hourly_wage, years_in_employment and years_in_education for each race category.
+
+```{r}
+#creating a table that shows the mean of hourly_wage, mean of years_in_employment and mean of years_in_education for each married category
+wage_marr_mean = aggregate(wage[,c("hourly_wage", "years_in_education", "years_in_employment")], list(wage$married), mean)
+#Renaming the first row from 0,1 to notmarried and married
+wage_marr_mean[,1] = c('Not Married', 'Married')
+#Renaming the columns 
+colnames(wage_marr_mean) = c("Married", "Mean of Hourly Wage", "Mean of Years in Education", "Mean of Years in Employment")
+wage_marr_mean
+```
+
+The table above shows the means of the hourly_wage, years_in_employment and years_in_education for each married category.
+
+
+
+#### 10. Implement a linear regression model and interpret its output.
+
+```{r}
+#Since all categories in the wage dataframe contain only two categories, there is no need to created dummy variables as R does this already
+#using the lm function to create a model that estimates the hourly wage 
+#For this model the dependent variable, y, is the hourly wage, while the other variables are the independent variables
+model = lm(hourly_wage ~ married + years_in_education + years_in_employment + num_dependents + gender + race, data = wage)
+summary(model)
+```
+
+```{r}
+#The race and the number of dependents variables are not significant because their p_value is greater than the level of significance 5%.
+
+#I removed the independent variables that were insignificant to the model to try and improve it.
+model = lm(hourly_wage ~ married + years_in_education + years_in_employment + gender, data = wage)
+summary(model)
+```
+
+(1) **Coefficients on the variables**. The estimated coefficients are specified in the second summary table.The equation for the model is:
+
+$Hourlywage = -2.61066 + 0.74471 * married + 0.51059 * yearsineducation + 0.15197 * yearsinemployment + 1.67094 * gender + e$
+
+The coefficients of the married, years_in_education, years_in_employment and gender variables shows that they have a positive effect on the the hourly wage. For the gender variable if the value is 1,i.e., if the person is male, it increases the hourly wage. If the person is female, the hourly wage doesn't change.
+
+(2) **Significance of the variables**. From the summary, we can see that the married, years_in_education, years_in_employment and gender variables are significant because the p_value is less than the level of significance 5%.
+
+(3) **Quality of the model**. It can be seen that the removal of the insignificant variables improved the Adjusted $R^2$ by a little bit, but the model is still not accurate.
+
+
+
+#### Checking The Classical Linear Regression Method Assupmtions
+
+```{r}
+#Linearity of the data
+#This is checked by inspecting the plot of the residuals vs fitted values
+plot(model, 1)
+#Normality of residuals
+#It can be checked by using the Q-Q plot of residuals
+plot(model, 2)
+```
+
+The residual plot and the Q-Q plot show that the residuals are not equally distributed around 0 and are not normally distributed.
+
+```{r}
+#Using the Jarque Bera test to confirm normality of residuals
+jarque.test(model$residuals)
+```
+
+The Jarque-Bera test shows that the residuals are not normally distributed since the p value is lower than the 5% significance level.
+
+Based on the violation of the assumptions of the classical linear regression method, we can conclude that this model is not reliable. The addition of other independent variables affecting the hourly wage that the model didn't take into account might improve the model.
