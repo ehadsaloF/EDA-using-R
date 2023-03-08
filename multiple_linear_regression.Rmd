@@ -1,0 +1,64 @@
+---
+title: "Multiple linear regression"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Now let us extend our simple model to include more independent variables. We are going to estimate this model using OLS:
+
+$GraduationRate = \alpha + \beta_1*SAT + \beta_2*AcceptanceRate + \beta_3*ExpenditurePerStudent + \beta_4*Top10HS$
+
+# Load the data and build the model
+
+```{r}
+# change the path to the file, as needed
+df = read.csv("Colleges and Universities.csv")
+
+# build the model
+model = lm(GraduationRate ~ SAT + AcceptanceRate + ExpenditurePerStudent + Top10HS, data=df)
+
+# view the summary
+summary(model)
+```
+
+(1) **Coefficients on the variables**. The estimated coefficients are specified in the second table. Our model is thus described by the line: 
+
+$GraduationRate = 17.921 + 0.072*SAT - 0.248*AcceptanceRate - 0.0001*ExpenditurePerStudent - 0.162*Top10HS + e$.
+
+Considering the signs on the coefficients we can state that the graduation rate is positively affected by the average SAT score (the greater the average SAT score, the more likely the graduation rate to be higher) and negatively affected by the other variables (for example, the greater the acceptance rate, the lower the graduation rate).
+
+(2) **Significance of the variables**. The p-values on all the coefficients, except the intercept, indicate that the variables are significant, i.e., the factors do have a significant effect on the graduation rate.
+
+(3) **Quality of the model**. The $R^2$ and the adjusted $R^2$ values have gone up from the 0.3 rate of the simple linear regression to around 0.5. This indicates that the addition of extra independent variables has helped to improve the model. 
+
+## Checking the assumptions of normality and zero mean of residuals
+
+As with the simple regression model, we can plot the standardized residuals and their histogram to confirm that the assumptions of normality of the distribution of residuals and of the zero mean of residuals are valid with this model.
+
+```{r}
+st_resids = rstandard(model)
+
+plot(x=model$fitted.values, y=st_resids, abline(h=0), xlab="Standardized residuals", ylab="Fitted values", main = "Residual plot")
+```
+
+```{r}
+hist(st_resids, xlab="Standardized residuals", breaks=10)
+```
+
+The scatterplot and the histogram suggest the residuals are equally distributed around 0 and are normally distributed.
+
+We can also run the Jarque-Bera test on the residuals (we need to load the moments library to do that):
+
+```{r}
+library(moments)
+jarque.test(st_resids)
+```
+
+The Jarque-Bera test indicates that the residuals are indeed normally distributed - the p value is over the 0.05 significance level.
+
+Thus, the addition of the extra variables not only improved the quality of the model, but also ensured that the assumptions of the classical linear regression method hold with the model.
+
+
